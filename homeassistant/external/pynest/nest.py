@@ -188,6 +188,9 @@ class Nest:
         else:
             return str(value)
 
+    def get_units(self):
+        return self.units
+
     def get_curtemp(self):
         temp = self.status["shared"][self.serial]["current_temperature"]
         temp = self.temp_out(temp)

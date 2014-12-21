@@ -27,6 +27,7 @@ STATE_ON = 'on'
 STATE_OFF = 'off'
 STATE_HOME = 'home'
 STATE_NOT_HOME = 'not_home'
+STATE_NEST = 'nest'
 
 # #### STATE ATTRIBUTES ####
 # Contains current time for a TIME_CHANGED event
@@ -47,6 +48,12 @@ ATTR_ENTITY_PICTURE = "entity_picture"
 
 # The unit of measurement if applicable
 ATTR_UNIT_OF_MEASUREMENT = "unit_of_measurement"
+
+# Custom group state attribute.
+# When set, the component will register to this group state
+# thus allowing for the creation of a custom group which
+# does not depend upon on/off states.
+ATTR_CUSTOM_GROUP_STATE = "group_state"
 
 # #### SERVICES ####
 SERVICE_HOMEASSISTANT_STOP = "stop"

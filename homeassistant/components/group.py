@@ -10,7 +10,7 @@ import logging
 import homeassistant as ha
 import homeassistant.util as util
 from homeassistant.const import (
-    ATTR_ENTITY_ID, STATE_ON, STATE_OFF, STATE_HOME, STATE_NOT_HOME)
+    ATTR_ENTITY_ID, ATTR_CUSTOM_GROUP_STATE, STATE_ON, STATE_OFF, STATE_HOME, STATE_NOT_HOME, STATE_NEST)
 
 DOMAIN = "group"
 DEPENDENCIES = []
@@ -20,7 +20,7 @@ ENTITY_ID_FORMAT = DOMAIN + ".{}"
 ATTR_AUTO = "auto"
 
 # List of ON/OFF state tuples for groupable states
-_GROUP_TYPES = [(STATE_ON, STATE_OFF), (STATE_HOME, STATE_NOT_HOME)]
+_GROUP_TYPES = [(STATE_ON, STATE_OFF), (STATE_HOME, STATE_NOT_HOME), (STATE_NEST, STATE_NEST)]
 
 _GROUPS = {}
 
@@ -126,6 +126,18 @@ def setup_group(hass, name, entity_ids, user_defined=True):
 
     for entity_id in entity_ids:
         state = hass.states.get(entity_id)
+
+        # Allows for creation of a custom group which does not depend
+        # upon an "on/off" state.
+        group_state = None
+        try:
+            group_state = state.attributes[ATTR_CUSTOM_GROUP_STATE]
+        except KeyError as ke:
+            warnings.append(ke)
+        except AttributeError as ae:
+            warnings.append(ae)
+        if group_state is not None:
+            state.state = group_state
 
         # Try to determine group type if we didn't yet
         if group_on is None and state:
