@@ -191,6 +191,13 @@ class Nest:
     def get_units(self):
         return self.units
 
+    def get_tartemp(self):
+        temp = self.status["shared"][self.serial]["target_temperature"]
+        temp = self.temp_out(temp)
+        temp = ("%0.0f" % temp)
+
+        return temp
+
     def get_curtemp(self):
         temp = self.status["shared"][self.serial]["current_temperature"]
         temp = self.temp_out(temp)
