@@ -37,34 +37,23 @@ def setup(hass, config):
     mynest = pynest.Nest(username, password, None)
     mynest.login()
 
-    def nest_currtemp(time):
-        """ Method to get the current inside temperature. """
+    def nest_temp(time):
+        """ Method to get the current inside and target temperatures. """
 
         mynest.get_status()
         current_temperature = mynest.get_curtemp()
-        logging.getLogger(__name__).info(current_temperature)
+        target_temperature = mynest.get_tartemp()
 
 
         hass.states.set(ENTITY_TEMP_INSIDE_ID, current_temperature, {ATTR_UNIT_OF_MEASUREMENT: mynest.get_units(), ATTR_CUSTOM_GROUP_STATE: "nest",ATTR_ENTITY_PICTURE:
                      "https://cdn2.iconfinder.com/data/icons/windows-8-metro-ui-weather-report/512/Temperature.png"})
 
-    hass.track_time_change(nest_currtemp, minute=[0,30], second=0)
-
-    def nest_tartemp(time):
-        """ Method to get the current target temperature. """
-
-        mynest.get_status()
-        target_temperature = mynest.get_tartemp()
-        logging.getLogger(__name__).info(target_temperature)
-
-
         hass.states.set(ENTITY_TEMP_TARGET_ID, target_temperature, {ATTR_UNIT_OF_MEASUREMENT: mynest.get_units(), ATTR_CUSTOM_GROUP_STATE: "nest",ATTR_ENTITY_PICTURE:
                      "http://d1hwvnnkb0v1bo.cloudfront.net/content/art/app/icons/target_icon.jpg"})
 
-    hass.track_time_change(nest_tartemp, minute=[0,30], second=0)
+    hass.track_time_change(nest_temp, minute=[0,30], second=0)
 
-    nest_currtemp(datetime.now())
-    nest_tartemp(datetime.now())
+    nest_temp(datetime.now())
 
     # Tells the bootstrapper that the component was succesfully initialized
     return True
