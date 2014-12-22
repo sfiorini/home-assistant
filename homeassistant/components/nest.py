@@ -85,7 +85,7 @@ def setup(hass, config):
         thermostat.update_ha_state(hass)
 
     # Update state every 30 seconds
-    hass.track_time_change(update_nest_state, second=[0, 30])
+    hass.track_time_change(update_nest_state, second=[0])
 
     hass.services.register(DOMAIN, SERVICE_TURN_OFF, handle_nest_service)
 
@@ -105,7 +105,7 @@ def setup(hass, config):
         hass.states.set(ENTITY_TEMP_TARGET_ID, target_temperature, {ATTR_UNIT_OF_MEASUREMENT: thermostat.nest.get_units(), ATTR_CUSTOM_GROUP_STATE: "nest",ATTR_ENTITY_PICTURE:
                      "http://d1hwvnnkb0v1bo.cloudfront.net/content/art/app/icons/target_icon.jpg"})
 
-    hass.track_time_change(nest_temp, minute=[0,30], second=0)
+    hass.track_time_change(nest_temp, second=[10])
 
     nest_temp(datetime.now())
 
@@ -117,7 +117,7 @@ class NestThermostat(ToggleDevice):
 
     def __init__(self, nest):
         self.nest = nest
-        self.state_attr = {ATTR_FRIENDLY_NAME: ENTITY_AWAY_NAME}
+        self.state_attr = {ATTR_FRIENDLY_NAME: ENTITY_AWAY_NAME, ATTR_CUSTOM_GROUP_STATE: "nest"}
 
     def get_name(self):
         """ Returns the name of the switch if any. """

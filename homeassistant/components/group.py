@@ -133,9 +133,9 @@ def setup_group(hass, name, entity_ids, user_defined=True):
         try:
             group_state = state.attributes[ATTR_CUSTOM_GROUP_STATE]
         except KeyError as ke:
-            warnings.append(ke)
+            warnings.append("ATTR_CUSTOM_GROUP_STATE not found.")
         except AttributeError as ae:
-            warnings.append(ae)
+            warnings.append("ATTR_CUSTOM_GROUP_STATE not found.")
         if group_state is not None:
             state.state = group_state
 
