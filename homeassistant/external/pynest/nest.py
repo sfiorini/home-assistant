@@ -208,6 +208,9 @@ class Nest:
     def show_curtemp(self):
         print(self.get_curtemp())
 
+    def is_away(self):
+        return self.status["structure"][self.structure_id]["away"]
+
     def set_temperature(self, temp):
         temp = self.temp_in(temp)
         data = '{"target_change_pending":true,"target_temperature":' + '%0.1f' % temp + '}'
