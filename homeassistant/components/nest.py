@@ -117,7 +117,8 @@ class NestThermostat(ToggleDevice):
 
     def __init__(self, nest):
         self.nest = nest
-        self.state_attr = {ATTR_FRIENDLY_NAME: ENTITY_AWAY_NAME, ATTR_CUSTOM_GROUP_STATE: "nest"}
+        self.state_attr = {ATTR_FRIENDLY_NAME: ENTITY_AWAY_NAME, ATTR_CUSTOM_GROUP_STATE: "nest", ATTR_ENTITY_PICTURE:
+                     "http://support-assets.nest.com/images/tpzimages/app-energy-history-basic-away-icon.png"}
 
     def get_name(self):
         """ Returns the name of the switch if any. """
