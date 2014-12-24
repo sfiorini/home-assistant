@@ -2,7 +2,8 @@ import logging
 import homeassistant.util as util
 from homeassistant.helpers import validate_config, ToggleDevice
 from homeassistant.const import (ATTR_ENTITY_PICTURE, ATTR_CUSTOM_GROUP_STATE, ATTR_UNIT_OF_MEASUREMENT,
-                                 ATTR_FRIENDLY_NAME, STATE_ON, SERVICE_TURN_ON, SERVICE_TURN_OFF, ATTR_ENTITY_ID)
+                                 ATTR_FRIENDLY_NAME, STATE_ON, SERVICE_TURN_ON, SERVICE_TURN_OFF, ATTR_ENTITY_ID,
+                                 ATTR_NEW_TARGET_TEMPERATURE, SERVICE_SET_TARGET_TEMPERATURE)
 from datetime import datetime, timedelta
 
 # The domain of your component. Should be equal to the name of your component
@@ -10,6 +11,7 @@ DOMAIN = "nest"
 ENTITY_AWAY_NAME = "state away"
 ENTITY_TEMP_INSIDE_ID = "nest_get.temperature_inside"
 ENTITY_TEMP_TARGET_ID = "nest_get.temperature_target"
+ENTITY_TEMP_TARGET_SET = "nest_set.temperature_target"
 
 ENTITY_AWAY_ID_FORMAT = DOMAIN + '.{}'
 
@@ -41,6 +43,13 @@ def turn_off(hass, entity_id=None):
 
     hass.services.call(DOMAIN, SERVICE_TURN_OFF, data)
 
+def set_temperature(hass, entity_id=None, new_temp=None):
+    """ Set new target temperature. """
+    data = {ATTR_ENTITY_ID: entity_id} if entity_id else {}
+    if new_temp:
+        data[ATTR_NEW_TARGET_TEMPERATURE] = new_temp
+
+    hass.services.call(DOMAIN, SERVICE_SET_TARGET_TEMPERATURE, data)
 
 def setup(hass, config):
     """ Setup NEST thermostat. """
@@ -72,6 +81,8 @@ def setup(hass, config):
         thermostat.nest.get_status()
         thermostat.update_ha_state(hass)
 
+    # Update state every 30 seconds
+    hass.track_time_change(update_nest_state, second=[0])
     update_nest_state(None)
 
     def handle_nest_service(service):
@@ -84,12 +95,17 @@ def setup(hass, config):
         thermostat.nest.get_status()
         thermostat.update_ha_state(hass)
 
-    # Update state every 30 seconds
-    hass.track_time_change(update_nest_state, second=[0])
-
     hass.services.register(DOMAIN, SERVICE_TURN_OFF, handle_nest_service)
-
     hass.services.register(DOMAIN, SERVICE_TURN_ON, handle_nest_service)
+
+    def handle_nest_set_temperature(service):
+        if service.data[ATTR_NEW_TARGET_TEMPERATURE]:
+            new_temp = float(service.data[ATTR_NEW_TARGET_TEMPERATURE])
+            thermostat.nest.set_temperature(new_temp)
+            thermostat.nest.get_status()
+            nest_temp(datetime.now())
+
+    hass.services.register(DOMAIN, SERVICE_SET_TARGET_TEMPERATURE, handle_nest_set_temperature)
 
     def nest_temp(time):
         """ Method to get the current inside and target temperatures. """
@@ -106,7 +122,6 @@ def setup(hass, config):
                      "http://d1hwvnnkb0v1bo.cloudfront.net/content/art/app/icons/target_icon.jpg"})
 
     hass.track_time_change(nest_temp, second=[10])
-
     nest_temp(datetime.now())
 
     # Tells the bootstrapper that the component was succesfully initialized
@@ -139,4 +154,8 @@ class NestThermostat(ToggleDevice):
     def get_state_attributes(self):
         """ Returns optional state attributes. """
         return self.state_attr
+
+    def set_temperature(self, temperature):
+        """ Set new target temperature """
+        self.nest.set_temperature(temperature)
 
