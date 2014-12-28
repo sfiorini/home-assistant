@@ -24,18 +24,21 @@ def from_config_dict(config, hass=None):
     """
     Tries to configure Home Assistant from a config dict.
 
+
     Dynamically loads required components and its dependencies.
     """
+
+    # Make a copy because we are mutating it.
+    # Convert it to defaultdict so components can always have config dict
+    config = defaultdict(dict, config)
+
     if hass is None:
-        hass = homeassistant.HomeAssistant()
+        hass = homeassistant.HomeAssistant(config)
 
     logger = logging.getLogger(__name__)
 
     loader.prepare(hass)
 
-    # Make a copy because we are mutating it.
-    # Convert it to defaultdict so components can always have config dict
-    config = defaultdict(dict, config)
 
     # Filter out the repeating and common config section [homeassistant]
     components = (key for key in config.keys()
@@ -68,8 +71,20 @@ def from_config_file(config_path, hass=None, enable_logging=True):
     functionality. Will add functionality to 'hass' parameter if given,
     instantiates a new Home Assistant object if 'hass' is not given.
     """
+    # Read config
+    config = configparser.ConfigParser()
+    config.read(config_path)
+
+    config_dict = {}
+
+    for section in config.sections():
+        config_dict[section] = {}
+
+        for key, val in config.items(section):
+            config_dict[section][key] = val
+
     if hass is None:
-        hass = homeassistant.HomeAssistant()
+        hass = homeassistant.HomeAssistant(defaultdict(dict, config_dict))
 
         # Set config dir to directory holding config file
         hass.config_dir = os.path.abspath(os.path.dirname(config_path))
@@ -100,16 +115,5 @@ def from_config_file(config_path, hass=None, enable_logging=True):
             logging.getLogger(__name__).error(
                 "Unable to setup error log %s (access denied)", err_log_path)
 
-    # Read config
-    config = configparser.ConfigParser()
-    config.read(config_path)
-
-    config_dict = {}
-
-    for section in config.sections():
-        config_dict[section] = {}
-
-        for key, val in config.items(section):
-            config_dict[section][key] = val
 
     return from_config_dict(config_dict, hass)

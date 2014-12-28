@@ -1,5 +1,7 @@
 # required
 requests>=2.0
+websocket-client
+python-magic
 
 # optional, needed for specific components
 

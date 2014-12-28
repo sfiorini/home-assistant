@@ -15,11 +15,13 @@ import re
 import datetime as dt
 import functools as ft
 
+from homeassistant.helpers import validate_config
 from homeassistant.const import (
     EVENT_HOMEASSISTANT_START, EVENT_HOMEASSISTANT_STOP,
     SERVICE_HOMEASSISTANT_STOP, EVENT_TIME_CHANGED, EVENT_STATE_CHANGED,
     EVENT_CALL_SERVICE, ATTR_NOW, ATTR_DOMAIN, ATTR_SERVICE, MATCH_ALL)
 import homeassistant.util as util
+import homeassistant.external.pypushbullet.pushbullet as pushbullet
 
 DOMAIN = "homeassistant"
 
@@ -38,10 +40,10 @@ _LOGGER = logging.getLogger(__name__)
 class HomeAssistant(object):
     """ Core class to route all communication to right components. """
 
-    def __init__(self):
+    def __init__(self, config):
         self._pool = pool = create_worker_pool()
 
-        self.bus = EventBus(pool)
+        self.bus = EventBus(config, pool)
         self.services = ServiceRegistry(self.bus, pool)
         self.states = StateMachine(self.bus)
 
@@ -310,10 +312,17 @@ class EventBus(object):
     and events.
     """
 
-    def __init__(self, pool=None):
+    def __init__(self, config, pool=None):
+        self.domain = "pushbullet"
+        self.conf_api_key = "api_key"
+        self.api_key = ""
         self._listeners = {}
         self._lock = threading.Lock()
         self._pool = pool or create_worker_pool()
+
+        # Validate that all required config options are given
+        if validate_config(config, {self.domain: [self.conf_api_key]}, _LOGGER):
+            self.api_key = config[self.domain][self.conf_api_key]
 
     @property
     def listeners(self):
@@ -334,8 +343,16 @@ class EventBus(object):
             listeners = get(MATCH_ALL, []) + get(event_type, [])
 
             event = Event(event_type, event_data, origin)
-
             _LOGGER.info("Bus:Handling %s", event)
+
+            if event.event_type == EVENT_STATE_CHANGED:
+                try:
+                    old_state = event_data["old_state"]
+                    new_state = event_data["new_state"]
+                    push_obj = pushbullet.PushBullet(self.api_key)
+                    push_obj.pushNote("", "Home Assistant" , event_data["entity_id"] + " is " + new_state.state)
+                except KeyError:
+                    _LOGGER.info("Bus:Handling, initial event, notification not required.")
 
             if not listeners:
                 return

@@ -1,8 +1,6 @@
 """
 Helper methods for components within Home Assistant.
 """
-from homeassistant import NoEntitySpecifiedError
-
 from homeassistant.loader import get_component
 from homeassistant.const import (
     ATTR_ENTITY_ID, STATE_ON, STATE_OFF, CONF_PLATFORM, CONF_TYPE)

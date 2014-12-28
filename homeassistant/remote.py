@@ -156,8 +156,8 @@ class EventBus(ha.EventBus):
     """ EventBus implementation that forwards fire_event to remote API. """
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, api, pool=None):
-        super().__init__(pool)
+    def __init__(self, api, config, pool=None):
+        super().__init__(config, pool)
         self._api = api
 
     def fire(self, event_type, event_data=None, origin=ha.EventOrigin.local):
