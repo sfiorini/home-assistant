@@ -347,6 +347,11 @@ class ThreadPool(object):
             if not self.running:
                 raise RuntimeError("ThreadPool not running")
 
+            # Clear the queue if it's getting too big
+            while self.work_queue.qsize() >= (self.busy_warning_limit + 2):
+                self.work_queue.get()
+                self.work_queue.task_done()
+
             self.work_queue.put(PriorityQueueItem(priority, job))
 
             # check if our queue is getting too big
@@ -354,7 +359,7 @@ class ThreadPool(object):
                and self.busy_callback is not None:
 
                 # Increase limit we will issue next warning
-                self.busy_warning_limit *= 2
+                # self.busy_warning_limit *= 2
 
                 self.busy_callback(self.current_jobs, self.work_queue.qsize())
 
