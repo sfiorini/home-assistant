@@ -314,17 +314,17 @@ class EventBus(object):
 
     def __init__(self, config, pool=None):
         self.domain = "pushbullet"
-        self.conf_api_key = "api_key"
+        self.conf_api_keys = "api_keys"
         self.conf_entity_ids = "entity_ids"
-        self.api_key = ""
+        self.api_keys = dict()
         self.notify_entity_ids = dict()
         self._listeners = {}
         self._lock = threading.Lock()
         self._pool = pool or create_worker_pool()
 
         # Validate that all required config options are given
-        if validate_config(config, {self.domain: [self.conf_api_key, self.conf_entity_ids]}, _LOGGER):
-            self.api_key = config[self.domain][self.conf_api_key]
+        if validate_config(config, {self.domain: [self.conf_api_keys, self.conf_entity_ids]}, _LOGGER):
+            self.api_keys = config[self.domain][self.conf_api_keys].split(",")
             self.notify_entity_ids = config[self.domain][self.conf_entity_ids].split(",")
 
     @property
@@ -347,13 +347,14 @@ class EventBus(object):
 
             event = Event(event_type, event_data, origin)
             _LOGGER.info("Bus:Handling %s", event)
-            if (event.event_type == EVENT_STATE_CHANGED) and (self.api_key is not "") and (len(self.notify_entity_ids) > 0):
+            if (event.event_type == EVENT_STATE_CHANGED) and (len(self.api_keys) > 0) and (len(self.notify_entity_ids) > 0):
                 for notify_entity_id in self.notify_entity_ids:
                     if ("old_state" in event_data):
                         if (notify_entity_id == event_data["entity_id"]):
                             new_state = event_data["new_state"]
-                            push_obj = pushbullet.PushBullet(self.api_key)
-                            push_obj.pushNote("", "Home Assistant" , event_data["entity_id"] + " is " + new_state.state)
+                            for api_key in self.api_keys:
+                                push_obj = pushbullet.PushBullet(api_key)
+                                push_obj.pushNote("", "Home Assistant" , event_data["entity_id"] + " is " + new_state.state)
                             break
             if not listeners:
                 return
