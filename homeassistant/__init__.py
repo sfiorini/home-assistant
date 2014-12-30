@@ -353,8 +353,9 @@ class EventBus(object):
                         if (notify_entity_id == event_data["entity_id"]):
                             new_state = event_data["new_state"]
                             for api_key in self.api_keys:
+                                splittedEntity = util.split_entity_id(event_data["entity_id"])
                                 push_obj = pushbullet.PushBullet(api_key)
-                                push_obj.pushNote("", "Home Assistant" , event_data["entity_id"] + " is " + new_state.state)
+                                push_obj.pushNote("", "Home Assistant" , splittedEntity[0].replace("_", " ").title() + ": " + splittedEntity[1].replace("_", " ").title() + " is " + new_state.state.replace("_", " ").title())
                             break
             if not listeners:
                 return
