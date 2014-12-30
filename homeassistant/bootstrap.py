@@ -49,14 +49,15 @@ def from_config_dict(config, hass=None):
         logger.info("Home Assistant core initialized")
 
         for domain in loader.load_order_components(components):
-            try:
-                if loader.get_component(domain).setup(hass, config):
-                    logger.info("component %s initialized", domain)
-                else:
-                    logger.error("component %s failed to initialize", domain)
+            if domain is not "pushbullet":
+                try:
+                    if loader.get_component(domain).setup(hass, config):
+                        logger.info("component %s initialized", domain)
+                    else:
+                        logger.error("component %s failed to initialize", domain)
 
-            except Exception:  # pylint: disable=broad-except
-                logger.exception("Error during setup of component %s", domain)
+                except Exception:  # pylint: disable=broad-except
+                    logger.exception("Error during setup of component %s", domain)
 
     else:
         logger.error(("Home Assistant core failed to initialize. "

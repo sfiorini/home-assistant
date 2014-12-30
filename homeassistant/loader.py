@@ -137,7 +137,8 @@ def get_component(comp_name):
                 ("Error loading %s. Make sure all "
                  "dependencies are installed"), path)
 
-    _LOGGER.error("Unable to find component %s", comp_name)
+    if comp_name != "pushbullet":
+        _LOGGER.error("Unable to find component %s", comp_name)
 
     return None
 

@@ -66,10 +66,13 @@ def setup(hass, config):
 
     def current_weather(time):
         """ Method to get the current outside temperature and weather conditions. """
-
         hass.states.set(ENTITY_WEATHER_CURRENT_ID, myweather.report, {ATTR_ENTITY_PICTURE: "http://mediad.publicbroadcasting.net/p/wunc/files/201403/weather-153703_640.png"})
+
     hass.track_time_change(current_weather, minute=[1,16,31,46])
+
     current_weather(datetime.now())
+
+    return True
 
 class MyWeather(object):
 
