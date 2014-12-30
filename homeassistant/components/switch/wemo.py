@@ -42,19 +42,37 @@ class WemoSwitch(ToggleDevice):
 
     def get_name(self):
         """ Returns the name of the switch if any. """
-        return self.wemo.name
+        result = ""
+        try:
+            result = self.wemo.name
+        except Exception as e:
+            logging.getLogger(__name__).error( "Wemo Get Name failed: %s", e.message)
+
+        return result
 
     def turn_on(self, **kwargs):
         """ Turns the switch on. """
-        self.wemo.on()
+        try:
+            self.wemo.on()
+        except Exception as e:
+            logging.getLogger(__name__).error( "Wemo On failed: %s", e.message)
 
     def turn_off(self):
         """ Turns the switch off. """
-        self.wemo.off()
+        try:
+            self.wemo.off()
+        except Exception as e:
+            logging.getLogger(__name__).error( "Wemo Off failed: %s", e.message)
 
     def is_on(self):
         """ True if switch is on. """
-        return self.wemo.get_state(True)
+        result = False
+        try:
+            result = self.wemo.get_state(True)
+        except Exception as e:
+            logging.getLogger(__name__).error( "Wemo Is On failed: %s", e.message)
+
+        return result
 
     def get_state_attributes(self):
         """ Returns optional state attributes. """
