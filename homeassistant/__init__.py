@@ -316,8 +316,12 @@ class EventBus(object):
         self.domain = "pushbullet"
         self.conf_api_keys = "api_keys"
         self.conf_entity_ids = "entity_ids"
+        self.conf_quiet_time_start = "quiet_time_start"
+        self.conf_quiet_time_end = "quiet_time_end"
         self.api_keys = dict()
         self.notify_entity_ids = dict()
+        self.quiet_time_start = dict()
+        self.quiet_time_end = dict()
         self._listeners = {}
         self._lock = threading.Lock()
         self._pool = pool or create_worker_pool()
@@ -326,6 +330,10 @@ class EventBus(object):
         if validate_config(config, {self.domain: [self.conf_api_keys, self.conf_entity_ids]}, _LOGGER):
             self.api_keys = config[self.domain][self.conf_api_keys].split(",")
             self.notify_entity_ids = config[self.domain][self.conf_entity_ids].split(",")
+
+        if validate_config(config, {self.domain: [self.conf_quiet_time_start, self.conf_quiet_time_end]}, _LOGGER):
+            self.quiet_time_start = config[self.domain][self.conf_quiet_time_start].split(",")
+            self.quiet_time_end = config[self.domain][self.conf_quiet_time_end].split(",")
 
     @property
     def listeners(self):
@@ -347,16 +355,31 @@ class EventBus(object):
 
             event = Event(event_type, event_data, origin)
             _LOGGER.info("Bus:Handling %s", event)
-            if (event.event_type == EVENT_STATE_CHANGED) and (len(self.api_keys) > 0) and (len(self.notify_entity_ids) > 0):
-                for notify_entity_id in self.notify_entity_ids:
-                    if ("old_state" in event_data):
-                        if (notify_entity_id == event_data["entity_id"]):
-                            new_state = event_data["new_state"]
-                            for api_key in self.api_keys:
-                                splittedEntity = util.split_entity_id(event_data["entity_id"])
-                                push_obj = pushbullet.PushBullet(api_key)
-                                push_obj.pushNote("", "Home Assistant" , splittedEntity[0].replace("_", " ").title() + ": " + splittedEntity[1].replace("_", " ").title() + " is " + new_state.state.replace("_", " ").title())
-                            break
+
+            quietStartComplete = None
+            quietEndComplete = None
+
+            if (len(self.quiet_time_start) > 0) and (len(self.quiet_time_end) > 0):
+                currDateTime = dt.datetime.now()
+                currDateOnly = dt.date(currDateTime.year, currDateTime.month, currDateTime.day)
+
+                quietStartTimeOnly = dt.time(int(self.quiet_time_start[0]), int(self.quiet_time_start[1]), 0)
+                quietStartComplete = dt.datetime.combine(currDateOnly, quietStartTimeOnly)
+
+                quietEndTimeOnly = dt.time(int(self.quiet_time_end[0]), int(self.quiet_time_end[1]), 0)
+                quietEndComplete = dt.datetime.combine(currDateOnly, quietEndTimeOnly)
+
+            if (quietStartComplete is not None) and (quietEndComplete is not None) and (event.event_type == EVENT_STATE_CHANGED) and (len(self.api_keys) > 0) and (len(self.notify_entity_ids) > 0):
+                if not(quietStartComplete < dt.datetime.now() < quietEndComplete):
+                    for notify_entity_id in self.notify_entity_ids:
+                        if ("old_state" in event_data):
+                            if (notify_entity_id == event_data["entity_id"]):
+                                new_state = event_data["new_state"]
+                                for api_key in self.api_keys:
+                                    splittedEntity = util.split_entity_id(event_data["entity_id"])
+                                    push_obj = pushbullet.PushBullet(api_key)
+                                    push_obj.pushNote("", "Home Assistant" , splittedEntity[0].replace("_", " ").title() + ": " + splittedEntity[1].replace("_", " ").title() + " is " + new_state.state.replace("_", " ").title())
+                                break
             if not listeners:
                 return
 
