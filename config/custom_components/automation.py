@@ -52,12 +52,10 @@ def setup(hass, config):
 
         # If anyone comes home and "nest away" is on, turn it off.
         if new_state.state == STATE_HOME and core.is_on(hass, NEST_STATE_AWAY_ID):
-
             core.turn_off(hass, NEST_STATE_AWAY_ID)
 
         # If all people leave the house and "nest away" is off, turn it on
-        elif new_state.state == STATE_NOT_HOME and core.is_off(hass, NEST_STATE_AWAY_ID):
-
+        elif new_state.state == STATE_NOT_HOME and not core.is_on(hass, NEST_STATE_AWAY_ID):
             core.turn_on(hass, NEST_STATE_AWAY_ID)
 
     if nest_away_ctrl == 1:
