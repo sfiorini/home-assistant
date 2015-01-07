@@ -16,6 +16,8 @@ from homeassistant.components import group
 DOMAIN = 'switch'
 DEPENDENCIES = []
 
+CONF_NUM_SWITCHES = 'number_of_switches'
+
 GROUP_NAME_ALL_SWITCHES = 'all_switches'
 ENTITY_ID_ALL_SWITCHES = group.ENTITY_ID_FORMAT.format(
     GROUP_NAME_ALL_SWITCHES)
@@ -57,7 +59,18 @@ def setup(hass, config):
     """ Track states and offer events for switches. """
     logger = logging.getLogger(__name__)
 
-    switches = platform_devices_from_config(config, DOMAIN, hass, logger)
+    num_switches = 0
+
+    if CONF_NUM_SWITCHES in config[DOMAIN]:
+        num_switches = int(config[DOMAIN][CONF_NUM_SWITCHES])
+
+    while True:
+        switches = platform_devices_from_config(config, DOMAIN, hass, logger)
+        if num_switches:
+            if len(switches) >= num_switches:
+                break
+        else:
+            break
 
     if not switches:
         return False

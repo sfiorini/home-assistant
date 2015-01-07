@@ -32,6 +32,9 @@ password=PASSWORD
 platform=wemo
 # Optional: hard code the hosts (comma seperated) to avoid scanning the network
 # hosts=192.168.1.9,192.168.1.12
+# Optional: number of switches on the network.
+# The initial scan will be repeated until all switches are found.
+# number_of_switches = 10
 
 [downloader]
 download_dir=downloads
